@@ -12,7 +12,7 @@ connection = engine.connect()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
 
 
-def get_sqlite_db() -> Session:
+def get_db() -> Session:
     db = SessionLocal()
     try:
         yield db
@@ -21,7 +21,7 @@ def get_sqlite_db() -> Session:
 
 
 @contextmanager
-def get_sqlite_db_contextmanager() -> Session:
+def get_db_contextmanager() -> Session:
     db = SessionLocal()
     try:
         yield db
@@ -29,7 +29,7 @@ def get_sqlite_db_contextmanager() -> Session:
         db.close()
 
 
-def reset_sqlite_database():
+def reset_database():
     with connection.begin():
         Base.metadata.drop_all(bind=connection)
         Base.metadata.create_all(bind=connection)

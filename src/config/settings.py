@@ -1,8 +1,11 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    PATH_TO_DB: str = "sqlite:///./src/database/source/cinema.db"
+    BASE_DIR: Path = Path(__file__).parent.parent
+    PATH_TO_DB: str = str(BASE_DIR / "src" / "database" / "source" / "cinema.db")
 
 
 settings = Settings()

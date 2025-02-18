@@ -1,11 +1,12 @@
 import uvicorn
 from fastapi import FastAPI
 
-from src.routers import accounts
+from src.routers import accounts_router, profiles_router
 
 app = FastAPI()
 
-app.include_router(accounts.router, prefix="/accounts", tags=["accounts"])
+app.include_router(accounts_router, prefix="/accounts", tags=["accounts"])
+app.include_router(profiles_router, prefix="/profiles", tags=["profiles"])
 
 
 if __name__ == "__main__":

@@ -3,8 +3,10 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
-from src.config.settings import settings
+from src.config.dependencies import get_settings
 from src.database.models.base import Base
+
+settings = get_settings()
 
 DATABASE_URL = settings.PATH_TO_DB
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})

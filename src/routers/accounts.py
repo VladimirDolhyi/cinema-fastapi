@@ -91,47 +91,53 @@ def register_user(
             detail=f"A user with this email {user_data.email} already exists."
         )
 
-    user_group = db.query(UserGroup).filter_by(name=UserGroupEnum.USER).first()
-
-    if not user_group:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="User group not found."
-        )
-
     try:
-        new_user = User.create(
-            email=str(user_data.email),
-            raw_password=user_data.password,
-            group_id=user_group.id,
+        group = db.query(UserGroup).filter(name=UserGroupEnum.USER).first()
+
+        if not group:
+            group = UserGroup(name=UserGroupEnum.USER)
+            db.add(group)
+            db.flush()
+            db.refresh(group)
+
+        new_user = User(
+            email=user_data.email,
+            password=user_data.password,
+            group_id=group.id,
+            group=group
         )
         db.add(new_user)
         db.flush()
-
-        activation_token = ActivationToken(user_id=new_user.id)
-        db.add(activation_token)
-        db.commit()
         db.refresh(new_user)
 
+        activation_token = ActivationToken(user_id=new_user.id, user=new_user)
+        db.add(activation_token)
+        db.flush()
+        db.refresh(activation_token)
+
+        new_user.activation_token = activation_token
+
+        db.commit()
+
+        activation_link = f"http://127.0.0.1/accounts/activate/?token={new_user.activation_token.token}"
+
+        background_tasks.add_task(
+            email_sender.send_email,
+            to_email=new_user.email,
+            subject="Registration",
+            template_name="activation_request.html",
+            context={
+                "email": new_user.email,
+                "activation_link": activation_link,
+            },
+        )
+        return UserRegistrationResponseSchema.model_validate(new_user)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during user creation."
         )
-    activation_link = f"http://127.0.0.1/accounts/activate/?token={new_user.activation_token.token}"
-
-    background_tasks.add_task(
-        email_sender.send_email,
-        to_email=new_user.email,
-        subject="Registration",
-        template_name="activation_request.html",
-        context={
-            "email": new_user.email,
-            "activation_link": activation_link,
-        },
-    )
-
-    return UserRegistrationResponseSchema.model_validate(new_user)
 
 
 @router.post(
@@ -371,7 +377,7 @@ def login_user(
     "/logout/",
     summary="User Logout",
     description="Revoke the refresh token and log the user out.",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     responses={
         400: {
             "description": "Bad Request - The provided refresh token is invalid or expired.",

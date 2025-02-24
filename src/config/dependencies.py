@@ -4,6 +4,7 @@ from fastapi import Depends, status, HTTPException
 
 from src.config.settings import TestingSettings, Settings, BaseAppSettings
 from src.exceptions import BaseSecurityError
+from src.notifications import EmailSenderInterface
 from src.notifications.emails import EmailSender
 from src.security.http import get_token
 from src.security.interfaces import JWTAuthManagerInterface
@@ -27,15 +28,17 @@ def get_jwt_auth_manager(settings: Settings = Depends(get_settings)) -> JWTAuthM
     )
 
 
-def get_accounts_email_notificator(settings: BaseAppSettings = Depends(get_settings)) -> EmailSender:
+def get_accounts_email_notificator(settings: BaseAppSettings = Depends(get_settings)) -> EmailSenderInterface:
     return EmailSender(
         hostname=settings.EMAIL_HOST,
         port=settings.EMAIL_PORT,
-        username=settings.EMAIL_USERNAME,
         email=settings.EMAIL_HOST_USER,
         password=settings.EMAIL_HOST_PASSWORD,
-        from_name=settings.EMAIL_FROM_NAME,
         use_tls=settings.EMAIL_USE_TLS,
+        template_dir=settings.PATH_TO_EMAIL_TEMPLATES_DIR,
+        activation_email_template_name=settings.ACTIVATION_EMAIL_TEMPLATE_NAME,
+        password_reset_template_name=settings.PASSWORD_RESET_TEMPLATE_NAME,
+        password_change_name=settings.PASSWORD_CHANGE_NAME
     )
 
 

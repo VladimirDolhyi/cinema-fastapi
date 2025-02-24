@@ -17,7 +17,7 @@ from src.database import (
     PasswordResetToken
 )
 from src.exceptions import BaseSecurityError
-from src.notifications.emails import EmailSender
+from src.notifications import EmailSenderInterface
 
 from src.config.dependencies import (
     get_accounts_email_notificator,
@@ -76,7 +76,7 @@ def register_user(
         user_data: UserRegistrationRequestSchema,
         background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
-        email_sender: EmailSender = Depends(get_accounts_email_notificator),
+        email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> UserRegistrationResponseSchema:
     """
     Endpoint for user registration.
@@ -120,17 +120,10 @@ def register_user(
 
         db.commit()
 
-        activation_link = f"http://127.0.0.1/accounts/activate/?token={new_user.activation_token.token}"
-
         background_tasks.add_task(
-            email_sender.send_email,
-            to_email=new_user.email,
-            subject="Registration",
-            template_name="activation_request.html",
-            context={
-                "email": new_user.email,
-                "activation_link": activation_link,
-            },
+            email_sender.send_activation_email,
+            new_user.email,
+            "http://127.0.0.1/accounts/activate/?token={new_user.activation_token.token}"
         )
         return UserRegistrationResponseSchema.model_validate(new_user)
     except SQLAlchemyError:
@@ -238,7 +231,7 @@ def resend_activation_token(
         user_data: UserRegistrationRequestSchema,
         background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
-        email_sender: EmailSender = Depends(get_accounts_email_notificator),
+        email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ):
     """
     Endpoint to resend the activation token if the previous one expired.
@@ -268,17 +261,10 @@ def resend_activation_token(
     db.refresh(activation_token)
     db.commit()
 
-    activation_link = f"http://127.0.0.1/accounts/activate/?token={db_user.activation_token.token}"
-
     background_tasks.add_task(
-        email_sender.send_email,
-        to_email=db_user.email,
-        subject="Registration",
-        template_name="activation_request.html",
-        context={
-            "email": db_user.email,
-            "activation_link": activation_link,
-        },
+        email_sender.send_activation_email,
+        db_user.email,
+        "http://127.0.0.1/accounts/activate/?token={new_user.activation_token.token}"
     )
 
     return MessageResponseSchema(message="Activation token resent successfully.")
@@ -438,7 +424,7 @@ def request_password_reset_token(
         data: PasswordResetRequestSchema,
         background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
-        email_sender: EmailSender = Depends(get_accounts_email_notificator),
+        email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> MessageResponseSchema:
     """
     Endpoint to request a password reset token.
@@ -459,18 +445,10 @@ def request_password_reset_token(
     db.add(new_reset_token)
     db.commit()
 
-    reset_token = (f"http://127.0.0.1/accounts/password-reset/request/?token="
-                   f"{user.password_reset_token.token}")
-
     background_tasks.add_task(
-        email_sender.send_email,
-        to_email=user.email,
-        subject="Password Reset Request",
-        template_name="password_reset_request.html",
-        context={
-            "email": user.email,
-            "reset_link": reset_token,
-        },
+        email_sender.send_password_reset_email,
+        str(data.email),
+        "http://127.0.0.1/accounts/password-reset/request/?token={user.password_reset_token.token}"
     )
 
     return MessageResponseSchema(
@@ -589,7 +567,7 @@ def request_change_password(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user_id: User = Depends(get_current_user_id),
-    email_sender: EmailSender = Depends(get_accounts_email_notificator),
+    email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> MessageResponseSchema:
     user = db.query(User).filter_by(id=user_id).first()
     if not user.verify_password(raw_password=user_data.password):
@@ -613,13 +591,8 @@ def request_change_password(
         )
 
     background_tasks.add_task(
-        email_sender.send_email,
-        to_email=user.email,
-        subject="Password Successfully Changed",
-        template_name="password_change_complete.html",
-        context={
-            "email": user.email,
-        },
+        email_sender.send_password_change,
+        str(user_data.email),
     )
 
     return MessageResponseSchema(message="Password changed successfully")

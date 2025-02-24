@@ -13,7 +13,8 @@ from src.database import (
     UserGroup,
     UserGroupEnum,
     ActivationToken,
-    RefreshToken, PasswordResetToken
+    RefreshToken,
+    PasswordResetToken
 )
 from src.exceptions import BaseSecurityError
 from src.notifications.emails import EmailSender
@@ -22,7 +23,7 @@ from src.config.dependencies import (
     get_accounts_email_notificator,
     get_settings,
     get_jwt_auth_manager,
-    get_current_user_id
+    get_current_user_id,
 )
 from src.schemas.accounts import (
     UserRegistrationResponseSchema,
@@ -92,7 +93,7 @@ def register_user(
         )
 
     try:
-        group = db.query(UserGroup).filter(name=UserGroupEnum.USER).first()
+        group = db.query(UserGroup).filter(UserGroup.name == UserGroupEnum.USER).first()
 
         if not group:
             group = UserGroup(name=UserGroupEnum.USER)
@@ -587,9 +588,10 @@ def request_change_password(
     user_data: PasswordChangeRequestSchema,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user_id),
+    user_id: User = Depends(get_current_user_id),
     email_sender: EmailSender = Depends(get_accounts_email_notificator),
 ) -> MessageResponseSchema:
+    user = db.query(User).filter_by(id=user_id).first()
     if not user.verify_password(raw_password=user_data.password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email or password.")
 

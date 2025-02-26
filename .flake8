@@ -8,3 +8,4 @@ exclude = .venv, venv
 extend-exclude =
     src/tests/*,
     src/database/migrations/*
+    alembic/

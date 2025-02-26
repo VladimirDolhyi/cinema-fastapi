@@ -35,6 +35,9 @@ class BaseAppSettings(BaseSettings):
     def S3_STORAGE_ENDPOINT(self) -> str:
         return f"http://{self.S3_STORAGE_HOST}:{self.S3_STORAGE_PORT}"
 
+    CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+    CELERY_RESULT_BACKEND: str = os.environ.get("CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/0")
+
 
 class Settings(BaseAppSettings):
     SECRET_KEY_ACCESS: str = os.getenv("SECRET_KEY_ACCESS", os.urandom(32))

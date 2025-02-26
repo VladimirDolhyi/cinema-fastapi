@@ -8,7 +8,7 @@ from src.database.models.base import Base
 
 settings = get_settings()
 
-DATABASE_URL = f"sqlite:///./src/database/cinema.db"
+DATABASE_URL = "sqlite:///./src/database/cinema.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 connection = engine.connect()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)

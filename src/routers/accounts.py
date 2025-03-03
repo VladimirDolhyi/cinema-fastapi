@@ -93,10 +93,11 @@ def register_user(
         )
 
     try:
-        group = db.query(UserGroup).filter(UserGroup.name == UserGroupEnum.USER).first()
+        user_group = UserGroupEnum[user_data.group.upper()]
+        group = db.query(UserGroup).filter(UserGroup.name == user_group.value).first()
 
         if not group:
-            group = UserGroup(name=UserGroupEnum.USER)
+            group = UserGroup(name=user_group.value)
             db.add(group)
             db.flush()
             db.refresh(group)
@@ -123,7 +124,7 @@ def register_user(
         background_tasks.add_task(
             email_sender.send_activation_email,
             new_user.email,
-            "http://127.0.0.1/accounts/activate/?token={new_user.activation_token.token}"
+            f"http://127.0.0.1/accounts/activate/?token={new_user.activation_token.token}"
         )
         return UserRegistrationResponseSchema.model_validate(new_user)
     except SQLAlchemyError:

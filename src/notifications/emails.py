@@ -33,7 +33,7 @@ class EmailSender(EmailSenderInterface):
 
         self._env = Environment(loader=FileSystemLoader(template_dir))
 
-    def _send_email(self, email: str, subject: str, html_content: str) -> None:
+    def send_email(self, email: str, subject: str, html_content: str | None) -> None:
         message = MIMEMultipart()
         message["From"] = self._email
         message["To"] = email
@@ -55,18 +55,18 @@ class EmailSender(EmailSenderInterface):
         html_content = template.render(email=email, activation_link=activation_link)
 
         subject = "Registration"
-        self._send_email(email, subject, html_content)
+        self.send_email(email, subject, html_content)
 
     def send_password_reset_email(self, email: str, reset_link: str) -> None:
         template = self._env.get_template(self._password_reset_template_name)
         html_content = template.render(email=email, reset_link=reset_link)
 
         subject = "Password Reset Request"
-        self._send_email(email, subject, html_content)
+        self.send_email(email, subject, html_content)
 
     def send_password_change(self, email: str) -> None:
         template = self._env.get_template(self._password_change)
         html_content = template.render(email=email)
 
         subject = "Password Successfully Changed"
-        self._send_email(email, subject, html_content)
+        self.send_email(email, subject, html_content)

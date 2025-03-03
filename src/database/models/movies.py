@@ -128,7 +128,6 @@ class Movie(Base):
     ratings: Mapped[float] = relationship(
         "Rating", back_populates="movie", cascade="all, delete-orphan"
     )
-    rating: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
     genres: Mapped[list["Genre"]] = relationship(
         "Genre",
         secondary=MoviesGenres,

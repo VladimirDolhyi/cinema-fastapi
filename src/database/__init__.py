@@ -5,9 +5,26 @@ from .models.accounts import (
     UserGroup,
     User,
     UserProfile,
+    TokenBase,
     ActivationToken,
     PasswordResetToken,
     RefreshToken
+)
+from .models.movies import (
+    MoviesGenres,
+    MoviesDirectors,
+    MoviesStars,
+    Genre,
+    Star,
+    Director,
+    Certification,
+    Movie,
+    Comment,
+    AnswerComment,
+    Favorite,
+    Like,
+    Dislike,
+    Rating
 )
 from .database import get_db, get_db_contextmanager, reset_database
 

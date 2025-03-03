@@ -90,6 +90,9 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan"
     )
+    ratings = relationship("Rating", back_populates='user')
+    comments = relationship("Comment", back_populates="user")
+    favorites = relationship("Favorite", back_populates="user")
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, is_active={self.is_active})>"

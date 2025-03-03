@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr, field_validator
 
 from src.database.validators import accounts as accounts_validators
@@ -23,12 +25,13 @@ class BaseEmailPasswordSchema(BaseModel):
 
 
 class UserRegistrationRequestSchema(BaseEmailPasswordSchema):
-    pass
+    group: Literal["user", "moderator", "admin"]
 
 
 class UserRegistrationResponseSchema(BaseModel):
     id: int
     email: EmailStr
+    group: Literal["user", "moderator", "admin"]
 
     model_config = {
         "from_attributes": True

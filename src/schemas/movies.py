@@ -47,27 +47,16 @@ class CommentSchema(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class FavoriteSchema(BaseModel):
-    id: int
-    favorite: bool
-
-    model_config = {"from_attributes": True}
-
-
 class MovieBaseSchema(BaseModel):
     uuid: str | None = None
     name: str
     year: int
     time: int
     imdb: float
-    votes: int = 0
-    rating: float = 0.0
     meta_score: float | None = None
     gross: float | None = None
     description: str
     price: float
-    # likes: int = 0
-    # dislikes: int = 0
 
     model_config = {
         "from_attributes": True
@@ -128,8 +117,6 @@ class MovieCreateSchema(BaseModel):
     year: int
     time: int
     imdb: float = Field(..., ge=0, le=10)
-    votes: int = 0
-    rating: float = 0.0
     meta_score: float | None = None
     gross: float | None = None
     description: str
@@ -157,7 +144,6 @@ class MovieUpdateSchema(BaseModel):
     year: int | None = None
     time: int | None = None
     imdb: float | None = Field(None, ge=0, le=10)
-    votes: int | None = None
     meta_score: float | None = None
     gross: float | None = None
     description: str | None = None

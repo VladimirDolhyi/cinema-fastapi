@@ -1,10 +1,9 @@
-import datetime
 import uuid
 
 from sqlalchemy import String, Float, Text, DECIMAL, UniqueConstraint, Date, ForeignKey, Table, Column, Integer
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
-from base import Base
+from .base import Base
 from src.database import User
 
 MoviesGenres = Table(
@@ -113,28 +112,23 @@ class Movie(Base):
     year: Mapped[int] = mapped_column(Integer, nullable=False)
     time: Mapped[int] = mapped_column(Integer, nullable=False)
     imdb: Mapped[float] = mapped_column(Float, nullable=False)
-    votes: Mapped[int] = mapped_column(Integer, nullable=False)
+    votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     meta_score: Mapped[float] = mapped_column(Float, nullable=True)
     gross: Mapped[float] = mapped_column(Float, nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=False)
     certification_id: Mapped[int] = mapped_column(ForeignKey("certifications.id"), nullable=False)
     certification: Mapped[Certification] = relationship(back_populates="movies")
-    likes: Mapped[list["Like"]] = relationship(
-        "Like", back_populates="movie", cascade="all, delete-orphan"
-    )
-    dislikes: Mapped[list["Dislike"]] = relationship(
-        "Dislike", back_populates="movie", cascade="all, delete-orphan"
-    )
     comments: Mapped[list["Comment"]] = relationship(
         "Comment", back_populates="movie", cascade="all, delete-orphan"
     )
     favorites: Mapped[list["Favorite"]] = relationship(
         "Favorite", back_populates="movie", cascade="all, delete-orphan"
     )
-    ratings: Mapped[list["Rating"]] = relationship(
+    ratings: Mapped[float] = relationship(
         "Rating", back_populates="movie", cascade="all, delete-orphan"
     )
+    rating: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
     genres: Mapped[list["Genre"]] = relationship(
         "Genre",
         secondary=MoviesGenres,
@@ -170,7 +164,7 @@ class Like(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    movie_id: Mapped[str] = mapped_column(ForeignKey("movies.id"), nullable=False)
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id"), nullable=False)
 
 
 class Dislike(Base):
@@ -178,7 +172,7 @@ class Dislike(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    movie_id: Mapped[str] = mapped_column(ForeignKey("movies.id"), nullable=False)
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id"), nullable=False)
 
 
 class Comment(Base):
@@ -186,8 +180,8 @@ class Comment(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    movie_id: Mapped[str] = mapped_column(ForeignKey("movies.id"), nullable=False)
-    text: Mapped[str] = mapped_column(Text, nullable=False)
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id"), nullable=False)
+    comment: Mapped[str] = mapped_column(Text, nullable=False)
 
     user: Mapped[User] = relationship("User", back_populates="comments")
     movie: Mapped[Movie] = relationship("Movie", back_populates="comments")
@@ -207,12 +201,12 @@ class Favorite(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    movie_id: Mapped[str] = mapped_column(ForeignKey("movies.id"), nullable=False)
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id"), nullable=False)
 
     user: Mapped[User] = relationship("User", back_populates="favorites")
     movie: Mapped[Movie] = relationship("Movie", back_populates="favorites")
 
-    __table_args__ = (UniqueConstraint("user_id", "movie_id", name="unique_favorite"))
+    __table_args__ = (UniqueConstraint("user_id", "movie_id", name="unique_favorite"),)
 
 
 class Rating(Base):

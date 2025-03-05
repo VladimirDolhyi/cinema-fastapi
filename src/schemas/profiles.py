@@ -23,7 +23,7 @@ class ProfileRequestSchema(BaseModel):
             gender: str = Form(),
             date_of_birth: date = Form(),
             info: str = Form(),
-            avatar: UploadFile = File()
+            avatar: UploadFile = File(),
     ):
         return cls(
             first_name=first_name,

@@ -94,10 +94,10 @@ def register_user(
 
     try:
         user_group = UserGroupEnum[user_data.group.upper()]
-        group = db.query(UserGroup).filter(UserGroup.name == user_group.value).first()
+        group = db.query(UserGroup).filter(UserGroup.name == user_group).first()
 
         if not group:
-            group = UserGroup(name=user_group.value)
+            group = UserGroup(name=user_group)
             db.add(group)
             db.flush()
             db.refresh(group)
@@ -105,7 +105,6 @@ def register_user(
         new_user = User(
             email=user_data.email,
             password=user_data.password,
-            group_id=group.id,
             group=group
         )
         db.add(new_user)
@@ -126,7 +125,11 @@ def register_user(
             new_user.email,
             f"http://127.0.0.1/accounts/activate/?token={new_user.activation_token.token}"
         )
-        return UserRegistrationResponseSchema.model_validate(new_user)
+        return UserRegistrationResponseSchema(
+            id=new_user.id,
+            email=new_user.email,
+            group=new_user.group.name.value
+        )
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(

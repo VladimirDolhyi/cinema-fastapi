@@ -3,8 +3,8 @@ from sqlalchemy import or_, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from src.config import get_current_user_id
-from src.database import get_db, User, UserGroupEnum
+from src.config import get_current_user_id, get_accounts_email_notificator
+from src.database import get_db, User, UserGroupEnum, Purchased
 from src.database.models.movies import (
     Movie,
     Genre,
@@ -18,6 +18,7 @@ from src.database.models.movies import (
     Dislike,
     Rating
 )
+from src.notifications import EmailSenderInterface
 from src.schemas.movies import (
     MovieListItemSchema,
     MovieListResponseSchema,
@@ -361,6 +362,7 @@ def get_favorite_movies(
     )
     return response
 
+
 @router.post("/favorite/")
 def add_favorite(
         movie_id: int,
@@ -385,7 +387,7 @@ def add_favorite(
     favorite = Favorite(user_id=user_id, movie_id=movie_id)
     db.add(favorite)
     db.commit()
-    return {"detail": "Movie added to favorites"}
+    return {"detail": f"Movie {existing_movie.name} added to favorites"}
 
 
 @router.delete("/favorite/")
@@ -411,7 +413,7 @@ def remove_favorite(
 
     db.delete(favorite)
     db.commit()
-    return {"detail": f"Movie with id: {movie_id} removed from favorites"}
+    return {"detail": f"Movie {existing_movie.name} with id: {movie_id} removed from favorites"}
 
 
 @router.get(
@@ -514,29 +516,6 @@ def get_movie_by_id(
 @router.patch(
     "/{movie_id}/",
     summary="Update a movie by ID",
-    description=(
-        "<h3>Update details of a specific movie by its unique ID.</h3>"
-        "<p>This endpoint updates the details of an existing movie. If the movie with "
-        "the given ID does not exist, a 404 error is returned.</p>"
-    ),
-    responses={
-        200: {
-            "description": "Movie updated successfully.",
-            "content": {
-                "application/json": {
-                    "example": {"detail": "Movie updated successfully."}
-                }
-            },
-        },
-        404: {
-            "description": "Movie not found.",
-            "content": {
-                "application/json": {
-                    "example": {"detail": "Movie with the given ID was not found."}
-                }
-            },
-        },
-    }
 )
 def update_movie(
     movie_id: int,
@@ -576,31 +555,12 @@ def update_movie(
         db.rollback()
         raise HTTPException(status_code=400, detail="Invalid input data.")
     else:
-        return {"detail": "Movie updated successfully."}
+        return {"detail": f"Movie {movie.name} updated successfully."}
 
 
 @router.delete(
     "/{movie_id}/",
     summary="Delete a movie by ID",
-    description=(
-        "<h3>Delete a specific movie from the database by its unique ID.</h3>"
-        "<p>If the movie exists, it will be deleted. If it does not exist, "
-        "a 404 error will be returned.</p>"
-    ),
-    responses={
-        204: {
-            "description": "Movie deleted successfully."
-        },
-        404: {
-            "description": "Movie not found.",
-            "content": {
-                "application/json": {
-                    "example": {"detail": "Movie with the given ID was not found."}
-                }
-            },
-        },
-    },
-    status_code=204
 )
 def delete_movie(
     movie_id: int,
@@ -630,9 +590,17 @@ def delete_movie(
             detail="Movie with the given ID was not found."
         )
 
+    purchased = db.query(Purchased).filter(Purchased.movie_id == movie_id).first()
+
+    if purchased:
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot delete the movie because it has been purchased by at least one user."
+        )
+
     db.delete(movie)
     db.commit()
-    return {"detail": "Movie deleted successfully."}
+    return {"detail": f"Movie {movie.name} deleted successfully."}
 
 
 @router.post("/{movie_id}/like")
@@ -723,6 +691,7 @@ def reply_to_comment(
     background_tasks: BackgroundTasks,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
+    email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ):
     comment = db.query(Comment).filter(Comment.id == comment_id).first()
     if not comment:
@@ -735,20 +704,11 @@ def reply_to_comment(
 
     comment = db.query(Comment).filter_by(id=answer.comment_id).first()
     user_email = db.query(User).filter_by(id=comment.user_id).first().email
-    subject = "You have got answer on your comment"
-    html_content = f"""
-        <html>
-            <body>
-                <h1>New Reply to Your Comment</h1>
-                <p>{answer_text}</p>
-            </body>
-        </html>
-        """
+
     background_tasks.add_task(
-        EmailSender.send_email,
+        email_sender.send_comment_answer,
         user_email,
-        subject,
-        html_content
+        f"New Reply to Your Comment: {answer_text}",
     )
 
     return {"message": "Reply created", "reply_id": answer.id}

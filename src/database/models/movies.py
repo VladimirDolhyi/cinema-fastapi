@@ -1,6 +1,8 @@
 import uuid
 
-from sqlalchemy import String, Float, Text, DECIMAL, UniqueConstraint, Date, ForeignKey, Table, Column, Integer
+from sqlalchemy import (
+    String, Float, Text, DECIMAL, UniqueConstraint, ForeignKey, Table, Column, Integer
+)
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from .base import Base
@@ -145,6 +147,7 @@ class Movie(Base):
         secondary=MoviesStars,
         back_populates="movies"
     )
+    cart_items = relationship("CartItem", back_populates="movie")
 
     __table_args__ = (
         UniqueConstraint("name", "year", "time", name="unique_movie"),
@@ -213,7 +216,7 @@ class Rating(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    movie_id: Mapped[str] = mapped_column(ForeignKey("movies.id"), nullable=False)
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id"), nullable=False)
     rating: Mapped[int] = mapped_column(Integer, nullable=False)
 
     user: Mapped[User] = relationship("User", back_populates="ratings")

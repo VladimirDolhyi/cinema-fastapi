@@ -2,6 +2,7 @@ import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from typing import Optional
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -33,12 +34,15 @@ class EmailSender(EmailSenderInterface):
 
         self._env = Environment(loader=FileSystemLoader(template_dir))
 
-    def send_email(self, email: str, subject: str, html_content: str | None) -> None:
+    def send_email(self, email: str, subject: str, html_content: Optional[str] = None) -> None:
         message = MIMEMultipart()
         message["From"] = self._email
         message["To"] = email
         message["Subject"] = subject
-        message.attach(MIMEText(html_content, "html"))
+        if html_content:
+            message.attach(MIMEText(html_content, "html"))
+        else:
+            message.attach(MIMEText("Hello, everyone", "plain"))
 
         try:
             with smtplib.SMTP(self._hostname, self._port) as server:
@@ -69,4 +73,18 @@ class EmailSender(EmailSenderInterface):
         html_content = template.render(email=email)
 
         subject = "Password Successfully Changed"
+        self.send_email(email, subject, html_content)
+
+    def send_remove_movie(self, email: str, movie_name: str, cart_id: int) -> None:
+        html_content = f"""
+            <p>Movie "{movie_name}" removed from cart with ID: {cart_id}</p>
+        """
+        subject = f"{movie_name} removed from cart with id: {cart_id}"
+        self.send_email(email, subject, html_content)
+
+    def send_comment_answer(self, email: str, answer_text: str) -> None:
+        html_content = f"""
+        <p>You have got answer on your comment: {answer_text}</p>
+        """
+        subject = "New Reply to Your Comment."
         self.send_email(email, subject, html_content)

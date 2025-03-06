@@ -12,7 +12,11 @@ from src.schemas.carts import CartResponse, CartItemResponse
 router = APIRouter()
 
 
-@router.post("/")
+@router.post(
+    "/",
+    summary="Add movie to the cart.",
+    description="Add movie (create cart item) to the cart",
+)
 def create_cart(
     movie_id: int,
     user_id: int = Depends(get_current_user_id),
@@ -62,7 +66,12 @@ def create_cart(
         )
 
 
-@router.get("/{cart_id}/", response_model=CartResponse)
+@router.get(
+    "/{cart_id}/",
+    summary="Get movie from the cart",
+    description="Get cart item (movie) from the cart).",
+    response_model=CartResponse
+)
 def get_cart(
     db: Session = Depends(get_db),
     user_id: User = Depends(get_current_user_id)
@@ -95,7 +104,10 @@ def get_cart(
         raise HTTPException(status_code=403, detail="Not authorized to view this cart.")
 
 
-@router.delete("/{cart_id}/clear/")
+@router.delete(
+    "/{cart_id}/clear/",
+    description="Clear a cart from all cart items (movies).",
+)
 def clear_cart(
     db: Session = Depends(get_db),
     user_id: User = Depends(get_current_user_id)
@@ -124,7 +136,10 @@ def clear_cart(
     return {"detail": "Cart cleared successfully."}
 
 
-@router.delete("/{cart_id}/{movie_id}/")
+@router.delete(
+    "/{cart_id}/{movie_id}/",
+    description="Remove a cart item (movie) from cart.",
+)
 def remove_movie_from_cart(
     movie_id: int,
     cart_id: int,

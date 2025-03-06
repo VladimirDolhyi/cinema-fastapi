@@ -24,6 +24,7 @@ router = APIRouter()
 
 @router.post(
     "/users/{user_id}/profile/",
+    description="Create a new profile for user.",
     response_model=ProfileResponseSchema,
     status_code=status.HTTP_201_CREATED
 )

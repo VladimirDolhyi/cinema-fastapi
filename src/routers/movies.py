@@ -27,8 +27,6 @@ from src.schemas.movies import (
     MovieUpdateSchema
 )
 
-from src.notifications.emails import EmailSender
-
 router = APIRouter()
 
 
@@ -37,10 +35,10 @@ router = APIRouter()
     response_model=MovieListResponseSchema,
     summary="Get a paginated list of movies",
     description=(
-            "<h3>This endpoint retrieves a paginated list of movies from the database. "
+            "This endpoint retrieves a paginated list of movies from the database. "
             "Clients can specify the `page` number and the number of items per page using `per_page`. "
             "The response includes details about the movies, total pages, and total items, "
-            "along with links to the previous and next pages if applicable.</h3>"
+            "along with links to the previous and next pages if applicable."
     ),
     responses={
         404: {
@@ -145,10 +143,10 @@ def get_movie_list(
     response_model=MovieDetailSchema,
     summary="Add a new movie",
     description=(
-            "<h3>This endpoint allows clients to add a new movie to the database. "
+            "This endpoint allows clients to add a new movie to the database. "
             "It accepts details such as name, date, genres, actors, languages, and "
             "other attributes. The associated country, genres, actors, and languages "
-            "will be created or linked automatically.</h3>"
+            "will be created or linked automatically."
     ),
     responses={
         201: {
@@ -264,10 +262,10 @@ def create_movie(
     response_model=MovieListResponseSchema,
     summary="Get a paginated list of favorite movies",
     description=(
-            "<h3>This endpoint retrieves a paginated list of favorite movies from the database. "
+            "This endpoint retrieves a paginated list of favorite movies from the database. "
             "Clients can specify the `page` number and the number of items per page using `per_page`. "
             "The response includes details about the movies, total pages, and total items, "
-            "along with links to the previous and next pages if applicable.</h3>"
+            "along with links to the previous and next pages if applicable."
     ),
     responses={
         404: {
@@ -363,7 +361,10 @@ def get_favorite_movies(
     return response
 
 
-@router.post("/favorite/")
+@router.post(
+    "/favorite/",
+    description="Add movie to favorites list.",
+)
 def add_favorite(
         movie_id: int,
         user_id: int = Depends(get_current_user_id),
@@ -390,7 +391,10 @@ def add_favorite(
     return {"detail": f"Movie {existing_movie.name} added to favorites"}
 
 
-@router.delete("/favorite/")
+@router.delete(
+    "/favorite/",
+    description="Remove movie from favorites list.",
+)
 def remove_favorite(
         movie_id: int,
         user_id: int = Depends(get_current_user_id),
@@ -419,7 +423,7 @@ def remove_favorite(
 @router.get(
     "/genres/",
     summary="Get list of genres",
-    description="<h3>This endpoint retrieves a list of genres with the count of movies in each.</h3>",
+    description="This endpoint retrieves a list of genres with the count of movies in each.",
     responses={
         404: {
             "description": "No genres found.",
@@ -442,8 +446,8 @@ def get_genres(db: Session = Depends(get_db)):
 
 @router.get(
     "/genres/{genre_id}/",
-    summary="Get genre details by genre name.",
-    description="<h3>This endpoint retrieves a genre with all related movies.</h3>",
+    summary="Get genre details by genre name",
+    description="This endpoint retrieves a genre with all related movies.",
     responses={
         404: {
             "description": "No genres found.",
@@ -466,10 +470,10 @@ def get_movies_by_genre(
     response_model=MovieDetailSchema,
     summary="Get movie details by ID",
     description=(
-            "<h3>Fetch detailed information about a specific movie by its unique ID. "
+            "Fetch detailed information about a specific movie by its unique ID. "
             "This endpoint retrieves all available details for the movie, such as "
             "its name, genre, crew, budget, and revenue. If the movie with the given "
-            "ID is not found, a 404 error will be returned.</h3>"
+            "ID is not found, a 404 error will be returned."
     ),
     responses={
         404: {
@@ -516,6 +520,7 @@ def get_movie_by_id(
 @router.patch(
     "/{movie_id}/",
     summary="Update a movie by ID",
+    description="This endpoint updates a specific movie by its unique ID.",
 )
 def update_movie(
     movie_id: int,
@@ -561,6 +566,7 @@ def update_movie(
 @router.delete(
     "/{movie_id}/",
     summary="Delete a movie by ID",
+    description="This endpoint deletes a specific movie by its unique ID.",
 )
 def delete_movie(
     movie_id: int,
@@ -603,7 +609,10 @@ def delete_movie(
     return {"detail": f"Movie {movie.name} deleted successfully."}
 
 
-@router.post("/{movie_id}/like")
+@router.post(
+    "/{movie_id}/like",
+    description="Likes a movie by ID",
+)
 def like_movie(
     movie_id: int,
     user_id: User = Depends(get_current_user_id),
@@ -625,7 +634,10 @@ def like_movie(
     return {"message": "Movie liked", "like_id": new_like.id}
 
 
-@router.post("/{movie_id}/dislike")
+@router.post(
+    "/{movie_id}/dislike",
+    description="Dislikes a movie by ID",
+)
 def dislike_movie(
     movie_id: int,
     user_id: User = Depends(get_current_user_id),
@@ -649,7 +661,10 @@ def dislike_movie(
     return {"message": "Movie disliked", "dislike_id": new_dislike.id}
 
 
-@router.post("/{movie_id}/comments")
+@router.post(
+    "/{movie_id}/comments",
+    description="Addd a comment on a movie",
+)
 def create_comment(
         movie_id: int,
         comment_text: str,
@@ -668,7 +683,10 @@ def create_comment(
     return {"message": f"Comment created with movie id: {movie_id}", "comment_id": new_comment.id}
 
 
-@router.get("/{movie_id}/comments/")
+@router.get(
+    "/{movie_id}/comments/",
+    description="Get the comments for a specific movie by ID",
+)
 def get_comments(
         movie_id: int,
         db: Session = Depends(get_db)
@@ -684,7 +702,10 @@ def get_comments(
     return comments
 
 
-@router.post("/comments/{comment_id}/answer")
+@router.post(
+    "/comments/{comment_id}/answer",
+    description="Add a answer for a specific comment",
+)
 def reply_to_comment(
     comment_id: int,
     answer_text: str,
@@ -717,7 +738,7 @@ def reply_to_comment(
 @router.put(
     "/{movie_id}/rate",
     summary="Rate a movie by its ID",
-    description="<h3>Rate movies on a 10-point scale.</h3>",
+    description="Rate movies on a 10-point scale.",
     responses={
         400: {
             "description": "Bad Request - The provided refresh token is invalid or expired.",

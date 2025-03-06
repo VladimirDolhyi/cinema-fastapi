@@ -551,7 +551,7 @@ def reset_password(
     "/change-password/",
     response_model=MessageResponseSchema,
     summary="Changing password",
-    description="<h3>Changing password using the transferred email, old and new password</h3>",
+    description="Changing password using the transferred email, old and new password",
     responses={
         400: {
             "description": "Bad Request - Invalid email or password.",

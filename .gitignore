@@ -1,0 +1,9 @@
+venv
+.idea/
+**__pycache__
+.env
+src/database/cinema.db
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir
+src/tests/test.db
